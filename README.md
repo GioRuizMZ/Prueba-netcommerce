@@ -11,7 +11,7 @@ API en Laravel 10 para consultar empresas con sus tareas y crear tareas asignada
 ## Instalación
 
 ```bash
-git clone <url-del-repositorio>
+git clone https://github.com/GioRuizMZ/Prueba-netcommerce.git
 cd Prueba-netcommerce
 composer install
 cp .env.example .env
