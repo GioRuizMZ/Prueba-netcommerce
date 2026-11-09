@@ -1,66 +1,115 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Prueba Netcommerce
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+API en Laravel 10 para consultar empresas con sus tareas y crear tareas asignadas a un usuario.
 
-## About Laravel
+## Requisitos
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- PHP 8.1 o superior
+- Composer
+- MySQL o MariaDB
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Instalación
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+```bash
+git clone <url-del-repositorio>
+cd Prueba-netcommerce
+composer install
+cp .env.example .env
+php artisan key:generate
+```
 
-## Learning Laravel
+Crear la base de datos `netcommerce` y ajustar las credenciales en `.env` si es necesario:
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+```
+DB_DATABASE=netcommerce
+DB_USERNAME=root
+DB_PASSWORD=
+```
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+Crear las tablas y cargar datos de prueba:
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 2000 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+```bash
+php artisan migrate --seed
+php artisan serve
+```
 
-## Laravel Sponsors
+La API queda disponible en `http://127.0.0.1:8000/api`.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+## Endpoints
 
-### Premium Partners
+### GET /api/companies
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[OP.GG](https://op.gg)**
-- **[WebReinvent](https://webreinvent.com/?utm_source=laravel&utm_medium=github&utm_campaign=patreon-sponsors)**
-- **[Lendio](https://lendio.com)**
+Lista las empresas con sus tareas. Acepta el parámetro opcional `search` para filtrar por nombre de empresa.
 
-## Contributing
+```
+GET /api/companies
+GET /api/companies?search=net
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### POST /api/tasks/create
 
-## Code of Conduct
+Crea una tarea para un usuario dentro de una empresa.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```json
+{
+    "company_id": 1,
+    "name": "task 4",
+    "description": "task content",
+    "user_id": 1
+}
+```
 
-## Security Vulnerabilities
+Respuesta `201`:
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```json
+{
+    "id": 4,
+    "name": "task 4",
+    "description": "task content",
+    "user": "Akira",
+    "company": {
+        "id": 1,
+        "name": "Netcommerce"
+    }
+}
+```
 
-## License
+Si la validación falla responde `422` con los errores. Un usuario no puede tener más de 5 tareas pendientes; esa validación está en la regla `App\Rules\MaxPendingTasks`.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## Consideraciones
+
+- Las rutas usan el prefijo `/api` que Laravel asigna a `routes/api.php`.
+- El parámetro `search` busca coincidencias parciales en el nombre de la empresa. Si no se envía, se devuelven todas.
+- Al crear una tarea, `start_at` se asigna con la fecha actual, `expired_at` queda en `null` y la tarea inicia como pendiente.
+- `description` es opcional.
+- El seeder crea la empresa Netcommerce y el usuario Akira para que las respuestas coincidan con los ejemplos del documento.
+
+## Pruebas
+
+Las pruebas usan SQLite en memoria, no modifican la base de datos local.
+
+```bash
+php artisan test
+```
+
+## Capturas
+
+Listado de empresas sin parámetro:
+
+![GET sin parámetro](capturas/Get%20sin%20parametro.png)
+
+Listado de empresas filtrando por nombre:
+
+![GET con parámetro](capturas/Get%20con%20parametro.png)
+
+Creación de una tarea:
+
+![POST crear tarea](capturas/Post%20para%20crear%20tareas.png)
+
+Validación con body vacío:
+
+![POST sin body](capturas/Post%20sin%20body.png)
+
+Usuario con 5 tareas pendientes:
+
+![POST con 5 tareas pendientes](capturas/Post%20con%205%20tareas%20pendientes.png)
